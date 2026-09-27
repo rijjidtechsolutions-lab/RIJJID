@@ -9,13 +9,18 @@ export default function ContactForm() {
     const data = Object.fromEntries(new FormData(form))
     setState({ type: 'sending', message: 'Sending your inquiry...' })
     try {
-      const response = await fetch('/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
-      const result = await response.json()
-      if (!response.ok) throw new Error(result.error || 'Unable to send your inquiry.')
+      const response = await fetch('/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(data) })
+      const responseText = await response.text()
+      let result = {}
+      try { result = responseText ? JSON.parse(responseText) : {} } catch { result = {} }
+      if (!response.ok) {
+        const unavailable = response.status === 404 || response.status === 405 || !responseText
+        throw new Error(result.error || (unavailable ? 'The email endpoint is not available on this deployment. Please contact RIJJID directly at rijjidtechsolutions@gmail.com.' : 'Unable to send your inquiry.'))
+      }
       form.reset()
       setState({ type: 'success', message: 'Thank you. Your inquiry has been sent to RIJJID.' })
     } catch (error) {
-      setState({ type: 'error', message: error.message || 'Unable to send your inquiry. Please try again.' })
+      setState({ type: 'error', message: error instanceof Error ? error.message : 'Unable to send your inquiry. Please try again.' })
     }
   }
   return <form className="brief-form reveal" onSubmit={submit}>
