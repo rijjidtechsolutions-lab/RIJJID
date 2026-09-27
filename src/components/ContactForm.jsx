@@ -1,1 +1,30 @@
-import{useState}from'react';import{services}from'../data';export default function ContactForm(){const[status,setStatus]=useState('Creates a ready-to-send brief you can copy and share.');async function submit(e){e.preventDefault();const d=new FormData(e.currentTarget);const brief=`RIJJID PROJECT BRIEF\n\nName / Company: ${d.get('name')}\nService: ${d.get('service')}\n\nProject summary:\n${d.get('summary')}`;try{await navigator.clipboard.writeText(brief);setStatus('Project brief copied. Paste it into your preferred email or messaging app to send to RIJJID.')}catch{setStatus('Your brief is ready. Copy your details before leaving this page.')}}return <form className="brief-form reveal" onSubmit={submit}><label>Your name<input required name="name" autoComplete="name" placeholder="Name or company"/></label><label>Service needed<select name="service">{services.map(s=><option key={s.number}>{s.title}</option>)}<option>Not sure yet</option></select></label><label>Project summary<textarea required name="summary" rows="4" placeholder="What would you like help with?"/></label><button className="button button-primary" type="submit">Prepare my project brief <span>↗</span></button><p className={`form-note ${status.startsWith('Project')?'success':''}`} aria-live="polite">{status}</p></form>}
+import { useState } from 'react'
+import { services } from '../data'
+
+export default function ContactForm() {
+  const [state, setState] = useState({ type: 'idle', message: 'Your inquiry will be delivered directly to RIJJID.' })
+  async function submit(event) {
+    event.preventDefault()
+    const form = event.currentTarget
+    const data = Object.fromEntries(new FormData(form))
+    setState({ type: 'sending', message: 'Sending your inquiry...' })
+    try {
+      const response = await fetch('/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || 'Unable to send your inquiry.')
+      form.reset()
+      setState({ type: 'success', message: 'Thank you. Your inquiry has been sent to RIJJID.' })
+    } catch (error) {
+      setState({ type: 'error', message: error.message || 'Unable to send your inquiry. Please try again.' })
+    }
+  }
+  return <form className="brief-form reveal" onSubmit={submit}>
+    <label>Your name or company<input required name="name" autoComplete="name" maxLength="120" placeholder="Name or company" /></label>
+    <label>Email address<input required type="email" name="email" autoComplete="email" maxLength="254" placeholder="you@example.com" /></label>
+    <label>Service needed<select name="service">{services.map((service) => <option key={service.number}>{service.title}</option>)}<option>Not sure yet</option></select></label>
+    <label>Project summary<textarea required name="summary" maxLength="4000" rows="4" placeholder="What would you like help with?" /></label>
+    <label className="form-trap" aria-hidden="true">Website<input name="website" tabIndex="-1" autoComplete="off" /></label>
+    <button className="button button-primary" type="submit" disabled={state.type === 'sending'}>{state.type === 'sending' ? 'Sending...' : 'Send project inquiry'} <span>↗</span></button>
+    <p className={`form-note ${state.type}`} role="status" aria-live="polite">{state.message}</p>
+  </form>
+}
