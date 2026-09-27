@@ -1,6 +1,6 @@
 import { Resend } from 'resend'
 
-const allowedServices = new Set(['Engineering & Construction','Detailing','Accounting & Bookkeeping','Administrative Support','Creative Services','Not sure yet'])
+const allowedServices = new Set(['Engineering & Construction','Steel Detailing','Accounting & Bookkeeping','Administrative Support','Creative Services','Not sure yet'])
 const clean = (value, limit) => String(value ?? '').trim().slice(0, limit)
 const escapeHtml = (value) => clean(value, 5000).replace(/[&<>"']/g, (character) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[character]))
 
